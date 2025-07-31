@@ -1,0 +1,41 @@
+name: Build and Deploy Docker Image to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t test-website:latest .
+
+      - name: Save Docker image to tar file
+        run: docker save test-website:latest -o test-website.tar
+
+      - name: Copy image tar to server
+        uses: appleboy/scp-action@v0.1.6
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "test-website.tar"
+          target: "/tmp/test-website.tar"
+
+      - name: Deploy container on server
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            docker load -i /tmp/test-website.tar
+            docker stop test-website || true
+            docker rm test-website || true
+            docker run -d --name test-website -p 80:80 test-website:latest
