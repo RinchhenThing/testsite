@@ -1,3 +1,4 @@
+#fr
 name: Build and Deploy Docker Image to Server
 
 on:
