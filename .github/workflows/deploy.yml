@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 name: Build and Deploy Docker Image to Server
 
 on:
@@ -56,3 +57,30 @@ jobs:
             
             # Clean up old, dangling images to save disk space
             docker image prune -f
+=======
+name: Sync Code to Server on Push
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH key and known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Sync code to server using rsync
+        run: |
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" ./ ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:/root/testsite
+>>>>>>> 3f1767ca5ac9b244e94f4f9c1838a5943e78c7a1
